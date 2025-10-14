@@ -19,7 +19,7 @@ Make sure you only ask ONE question at a time.
         Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [{ role: "system", content: systemPrompt }, ...messages],
         temperature: 0.8,
       }),
