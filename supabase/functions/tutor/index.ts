@@ -1,32 +1,38 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+serve(async (req) => {
+  try {
+    const { topic, messages } = await req.json();
 
-console.log("Hello from Functions!")
+    const systemPrompt = `
+You are a helpful, encouraging tutor.
+Your job is to ask the user five questions about the topic "${topic}" to test their understanding.
+After each response, give short feedback before moving to the next question.
+Once all five are done, ask the user to choose a new topic.
+Make sure you only ask ONE question at a time.
+`;
 
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        temperature: 0.8,
+      }),
+    });
+
+    const data = await openaiResponse.json();
+    const message = data.choices?.[0]?.message?.content ?? "No response.";
+
+    return new Response(JSON.stringify({ reply: message }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
-
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/tutor' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
+});
