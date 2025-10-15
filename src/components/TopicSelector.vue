@@ -1,6 +1,9 @@
 <script setup>
   import { ref, onMounted } from "vue";
   import { getAllTopics } from "@/services/db";
+  import { defineEmits } from "vue";
+
+  const emit = defineEmits(["topic-selected"]);
 
   const topics = ref([]);
   const selectedTopic = ref("");
@@ -22,7 +25,7 @@
       console.warn("No topic selected.");
       return;
     }
-    console.log("Selected topic:", selectedTopic.value);
+    emit("topic-selected", selectedTopic.value);
   }
 </script>
 
