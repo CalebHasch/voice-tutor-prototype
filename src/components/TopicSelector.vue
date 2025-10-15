@@ -20,11 +20,12 @@
     }
   });
 
-  function handleStartSession() {
+  async function handleStartSession() {
     if (!selectedTopic.value) {
       console.warn("No topic selected.");
       return;
     }
+    console.log("Starting session with topic:", selectedTopic.value);
     emit("topic-selected", selectedTopic.value);
   }
 </script>
@@ -35,7 +36,7 @@
 
     <select id="topic" v-model="selectedTopic" :disabled="loading || !!errorMessage">
       <option value="" disabled>Select a topic</option>
-      <option v-for="topic in topics" :key="topic.id" :value="topic.id">
+      <option v-for="topic in topics" :key="topic.id" :value="topic.name">
         {{ topic.name }}
       </option>
     </select>

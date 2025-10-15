@@ -1,23 +1,61 @@
 <script setup>
-  import { ref } from "vue";
+  import { ref, watch } from "vue";
   import { sendTutorMessage } from "@/services/tutorService";
 
-  const selectedTopic = ref("");
+  // Props — selectedTopic will come from parent (e.g. TopicSelector)
+  const props = defineProps({
+    selectedTopic: {
+      type: String,
+      default: "",
+    },
+  });
+
+  const messages = ref([]);
   const userInput = ref("");
-  const messages = ref([{ role: "system", content: "You are a patient tutor." }]);
-
   const loading = ref(false);
+  const initialized = ref(false);
 
+  // Watch for topic change → reset chat and start new session
+  watch(
+    () => props.selectedTopic,
+    async (newTopic) => {
+      if (!newTopic) return;
+      messages.value = [{ role: "system", content: "You are a patient tutor." }];
+      initialized.value = false;
+      await startTutorSession(newTopic);
+    }
+  );
+
+  // Fetch initial tutor message for topic
+  async function startTutorSession(topic) {
+    loading.value = true;
+    try {
+      const response = await sendTutorMessage(topic, messages.value);
+      messages.value.push({ role: "assistant", content: response.reply });
+      initialized.value = true;
+    } catch (error) {
+      console.error("Error starting tutor session:", error);
+      messages.value.push({
+        role: "assistant",
+        content: "Error: Could not reach tutor. Try again later.",
+      });
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // Handle user input and next tutor response
   async function handleSend() {
-    if (!userInput.value) return;
+    if (!userInput.value || loading.value) return;
 
     messages.value.push({ role: "user", content: userInput.value });
 
     loading.value = true;
+    const topic = props.selectedTopic;
 
     try {
-      const reply = await sendTutorMessage(selectedTopic.value, messages.value);
-      messages.value.push({ role: "assistant", content: reply });
+      const response = await sendTutorMessage(topic, messages.value);
+      messages.value.push({ role: "assistant", content: response.reply });
     } catch {
       messages.value.push({
         role: "assistant",
@@ -39,14 +77,17 @@
       </div>
     </div>
 
-    <div class="input-area">
+    <div v-if="props.selectedTopic" class="input-area">
       <input
         type="text"
         v-model="userInput"
         @keyup.enter="handleSend"
         placeholder="Type your answer..."
+        :disabled="loading"
       />
-      <button @click="handleSend" :disabled="loading || !selectedTopic">Send</button>
+      <button @click="handleSend" :disabled="loading || !userInput">
+        {{ loading ? "..." : "Send" }}
+      </button>
     </div>
   </div>
 </template>
@@ -63,16 +104,20 @@
     overflow-y: auto;
     border: 1px solid #ccc;
     padding: 1rem;
+    border-radius: 0.5rem;
+    background: #fafafa;
   }
 
   .user {
     text-align: right;
-    color: blue;
+    color: #1e88e5;
+    margin-bottom: 0.5rem;
   }
 
   .assistant {
     text-align: left;
-    color: green;
+    color: #2e7d32;
+    margin-bottom: 0.5rem;
   }
 
   .input-area {

@@ -1,6 +1,16 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+    });
+  }
+
   try {
     const { topic, messages } = await req.json();
 
@@ -20,19 +30,28 @@ Make sure you only ask ONE question at a time.
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        messages: [{ role: "system", content: systemPrompt }, ...(messages || [])],
         temperature: 0.8,
       }),
     });
 
     const data = await openaiResponse.json();
-    const message = data.choices?.[0]?.message?.content ?? "No response.";
+    const message = data.choices?.[0]?.message?.content ?? "No response from OpenAI.";
 
     return new Response(JSON.stringify({ reply: message }), {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
     });
   } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    console.error("Error in tutor function:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+    });
   }
 });
