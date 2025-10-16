@@ -1,43 +1,32 @@
 <script setup>
-  import { ref, watch } from "vue";
+  import { ref } from "vue";
   import { sendTutorMessage } from "@/services/tutorService";
 
-  // Props — selectedTopic will come from parent (e.g. TopicSelector)
-  const props = defineProps({
-    selectedTopic: {
-      type: String,
-      default: "",
-    },
-  });
-
+  const selectedTopic = ref("");
   const messages = ref([]);
   const userInput = ref("");
   const loading = ref(false);
-  const initialized = ref(false);
 
-  // Watch for topic change → reset chat and start new session
-  watch(
-    () => props.selectedTopic,
-    async (newTopic) => {
-      if (!newTopic) return;
-      messages.value = [{ role: "system", content: "You are a patient tutor." }];
-      initialized.value = false;
-      await startTutorSession(newTopic);
-    }
-  );
+  defineExpose({ startNewSession });
 
   // Fetch initial tutor message for topic
-  async function startTutorSession(topic) {
+  async function startNewSession(topic) {
+    selectedTopic.value = topic;
+    messages.value = [];
+    const initialMessage = [{ role: "system", content: "You are a patient tutor." }];
+    userInput.value = "";
+
     loading.value = true;
+
     try {
-      const response = await sendTutorMessage(topic, messages.value);
+      // Get the first question from the tutor
+      const response = await sendTutorMessage(selectedTopic.value, initialMessage);
       messages.value.push({ role: "assistant", content: response.reply });
-      initialized.value = true;
     } catch (error) {
-      console.error("Error starting tutor session:", error);
+      console.error("Error starting session:", error);
       messages.value.push({
         role: "assistant",
-        content: "Error: Could not reach tutor. Try again later.",
+        content: "Error: Could not start tutor session.",
       });
     } finally {
       loading.value = false;
@@ -51,10 +40,9 @@
     messages.value.push({ role: "user", content: userInput.value });
 
     loading.value = true;
-    const topic = props.selectedTopic;
 
     try {
-      const response = await sendTutorMessage(topic, messages.value);
+      const response = await sendTutorMessage(selectedTopic.value, messages.value);
       messages.value.push({ role: "assistant", content: response.reply });
     } catch {
       messages.value.push({
@@ -77,7 +65,7 @@
       </div>
     </div>
 
-    <div v-if="props.selectedTopic" class="input-area">
+    <div v-if="selectedTopic" class="input-area">
       <input
         type="text"
         v-model="userInput"
