@@ -1,80 +1,37 @@
 <script setup>
   import { ref } from "vue";
-  import { sendTutorMessage } from "@/services/tutorService";
+  import { useTutorStore } from "@/stores/tutorStore";
 
-  const selectedTopic = ref("");
-  const messages = ref([]);
+  const tutorStore = useTutorStore();
   const userInput = ref("");
-  const loading = ref(false);
-
-  defineExpose({ startNewSession });
-
-  // Fetch initial tutor message for topic
-  async function startNewSession(topic) {
-    selectedTopic.value = topic;
-    messages.value = [];
-    const initialMessage = [{ role: "system", content: "You are a patient tutor." }];
-    userInput.value = "";
-
-    loading.value = true;
-
-    try {
-      // Get the first question from the tutor
-      const response = await sendTutorMessage(selectedTopic.value, initialMessage);
-      messages.value.push({ role: "assistant", content: response.reply });
-    } catch (error) {
-      console.error("Error starting session:", error);
-      messages.value.push({
-        role: "assistant",
-        content: "Error: Could not start tutor session.",
-      });
-    } finally {
-      loading.value = false;
-    }
-  }
 
   // Handle user input and next tutor response
   async function handleSend() {
-    if (!userInput.value || loading.value) return;
-
-    messages.value.push({ role: "user", content: userInput.value });
-
-    loading.value = true;
-
-    try {
-      const response = await sendTutorMessage(selectedTopic.value, messages.value);
-      messages.value.push({ role: "assistant", content: response.reply });
-    } catch {
-      messages.value.push({
-        role: "assistant",
-        content: "Error: Could not reach tutor. Try again.",
-      });
-    } finally {
-      userInput.value = "";
-      loading.value = false;
-    }
+    if (!userInput.value.trim()) return;
+    await tutorStore.sendUserMessage(userInput.value);
+    userInput.value = "";
   }
 </script>
 
 <template>
   <div class="tutor-chat">
     <div class="messages">
-      <div v-for="(msg, index) in messages" :key="index" :class="msg.role">
+      <div v-for="(msg, index) in tutorStore.messages" :key="index" :class="msg.role">
         <strong>{{ msg.role === "user" ? "You" : "Tutor" }}:</strong>
         {{ msg.content }}
       </div>
     </div>
 
-    <div v-if="selectedTopic" class="input-area">
+    <div v-if="tutorStore.selectedTopic" class="input-area">
       <input
         type="text"
         v-model="userInput"
         @keyup.enter="handleSend"
         placeholder="Type your answer..."
-        :disabled="loading"
+        :disabled="tutorStore.loading"
       />
-      <button @click="handleSend" :disabled="loading || !userInput">
-        {{ loading ? "..." : "Send" }}
+      <button @click="handleSend" :disabled="tutorStore.loading || !userInput">
+        {{ tutorStore.loading ? "..." : "Send" }}
       </button>
     </div>
   </div>

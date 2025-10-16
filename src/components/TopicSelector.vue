@@ -1,14 +1,14 @@
 <script setup>
-  import { ref, onMounted } from "vue";
   import { getAllTopics } from "@/services/db";
-  import { defineEmits } from "vue";
+  import { useTutorStore } from "@/stores/tutorStore";
+  import { onMounted, ref } from "vue";
 
-  const emit = defineEmits(["start-session"]);
+  const tutorStore = useTutorStore();
 
   const topics = ref([]);
   const selectedTopic = ref("");
-  const loading = ref(true);
   const errorMessage = ref(null);
+  const loading = ref(true);
 
   onMounted(async () => {
     try {
@@ -25,7 +25,8 @@
       console.warn("No topic selected.");
       return;
     }
-    emit("start-session", selectedTopic.value);
+
+    tutorStore.startNewSession(selectedTopic.value);
   }
 </script>
 

@@ -1,25 +1,14 @@
 <script setup>
   import TopicSelector from "@/components/TopicSelector.vue";
   import TutorChat from "@/components/TutorChat.vue";
-  import { ref } from "vue";
-
-  const tutorChatRef = ref(null);
-
-  function handleStartSession(topic) {
-    if (tutorChatRef.value) {
-      tutorChatRef.value.startNewSession(topic);
-    }
-  }
 </script>
 
 <template>
   <main>
     <h1>Voice-Based Tutor</h1>
-    <p>Select a topic and start a tutoring session.</p>
 
-    <TopicSelector @start-session="handleStartSession" />
-
-    <TutorChat ref="tutorChatRef" />
+    <TopicSelector />
+    <TutorChat />
   </main>
 </template>
 
