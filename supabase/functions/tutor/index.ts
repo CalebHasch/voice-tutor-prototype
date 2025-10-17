@@ -1,14 +1,14 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
@@ -28,11 +28,21 @@ Then ask the user to choose a new topic.
 Make sure you only ask ONE question at a time.
 `;
 
+    // --- Call OpenAI ---
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) {
+      console.error("Missing OPENAI_API_KEY in environment");
+      return new Response(JSON.stringify({ error: "Missing OpenAI API key" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
+        Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
@@ -42,22 +52,29 @@ Make sure you only ask ONE question at a time.
     });
 
     const data = await openaiResponse.json();
+
+    if (!openaiResponse.ok) {
+      console.error("OpenAI API Error:", data);
+      return new Response(
+        JSON.stringify({ error: data.error?.message || "OpenAI request failed" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const message = data.choices?.[0]?.message?.content ?? "No response from OpenAI.";
 
+    // --- Return the response ---
     return new Response(JSON.stringify({ reply: message }), {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("Error in tutor function:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
