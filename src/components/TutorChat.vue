@@ -1,4 +1,5 @@
 <script setup>
+  /* global webkitSpeechRecognition */
   import { ref, onMounted, onBeforeUnmount } from "vue";
   import { useTutorStore } from "@/stores/tutorStore";
 
@@ -10,7 +11,7 @@
   onMounted(() => {
     if ("webkitSpeechRecognition" in window) {
       recognition = new webkitSpeechRecognition();
-      recognition.continuous = true;
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = "en-US";
 
