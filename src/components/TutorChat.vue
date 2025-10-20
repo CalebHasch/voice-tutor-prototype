@@ -1,89 +1,24 @@
 <script setup>
-  /* global webkitSpeechRecognition */
-  import { ref, onMounted, onBeforeUnmount } from "vue";
+  import { ref, watch } from "vue";
   import { useTutorStore } from "@/stores/tutorStore";
+  import { useSpeechRecognition } from "@/composables/useSpeechRecognition";
 
   const tutorStore = useTutorStore();
   const userInput = ref("");
-  const isRecording = ref(false);
-  let recognition = null;
+  const { isRecording, transcript, toggleRecording } = useSpeechRecognition(handleSend);
 
-  onMounted(() => {
-    if ("webkitSpeechRecognition" in window) {
-      recognition = new webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-
-      recognition.onstart = () => {
-        isRecording.value = true;
-      };
-
-      recognition.onresult = (event) => {
-        let transcript = "";
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          transcript += event.results[i][0].transcript;
-        }
-        userInput.value = transcript.trim();
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        stopRecording();
-      };
-
-      recognition.onend = async () => {
-        if (isRecording.value) {
-          isRecording.value = false;
-
-          if (userInput.value.trim()) {
-            await handleSend();
-          }
-        }
-      };
-    } else {
-      console.warn("Speech recognition not supported in this browser.");
-    }
+  watch(transcript, (newVal) => {
+    userInput.value = newVal || "";
   });
-
-  onBeforeUnmount(() => {
-    if (recognition) recognition.stop();
-  });
-
-  function toggleRecording() {
-    if (!recognition) {
-      alert("Speech recognition not supported in this browser.");
-      return;
-    }
-    if (isRecording.value) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  }
-
-  function startRecording() {
-    if (tutorStore.loading) return;
-    try {
-      recognition.start();
-    } catch (err) {
-      console.error("Error starting speech recognition:", err);
-    }
-  }
-
-  function stopRecording() {
-    try {
-      recognition.stop();
-      isRecording.value = false;
-    } catch (err) {
-      console.error("Error stopping speech recognition:", err);
-    }
-  }
 
   // Handle user input and next tutor response
   async function handleSend() {
-    if (!userInput.value.trim()) return;
-    await tutorStore.sendUserMessage(userInput.value);
+    const message = userInput.value;
+
+    if (typeof message !== "string" || !message.trim()) return;
+
+    await tutorStore.sendUserMessage(message.trim());
+
     userInput.value = "";
   }
 </script>
