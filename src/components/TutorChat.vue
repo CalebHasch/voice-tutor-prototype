@@ -5,7 +5,12 @@
 
   const tutorStore = useTutorStore();
   const userInput = ref("");
-  const { isRecording, transcript, toggleRecording } = useSpeechRecognition(handleSend);
+  const {
+    isRecording,
+    transcript,
+    toggleRecording,
+    error: speechError,
+  } = useSpeechRecognition(handleSend);
 
   watch(transcript, (newVal) => {
     userInput.value = newVal || "";
@@ -55,6 +60,7 @@
         {{ tutorStore.loading ? "..." : "Send" }}
       </button>
     </div>
+    <p v-if="speechError" class="error-message">{{ speechError }}</p>
   </div>
 </template>
 
@@ -151,5 +157,15 @@
   button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .error-message {
+    color: #d32f2f; /* Red for errors */
+    background-color: #ffebee; /* Light red/pink background */
+    border: 1px solid #f44336; /* Slightly darker red border */
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
   }
 </style>
