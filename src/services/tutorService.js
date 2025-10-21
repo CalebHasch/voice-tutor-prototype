@@ -1,12 +1,19 @@
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { supabase } from "@/lib/supabase";
 
 export async function sendTutorMessage(topic, messages) {
-  const res = await fetch("https://zhcfbmpgttdzetyibetn.functions.supabase.co/tutor", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
-    body: JSON.stringify({ topic, messages }),
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke("tutor", {
+      body: { topic, messages },
+    });
 
-  if (!res.ok) throw new Error("Failed to contact tutor");
-  return await res.json();
+    if (error) {
+      console.error("Error calling tutor function:", error);
+      throw new Error(error.message || "Failed to contact tutor");
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Unexpected error in sendTutorMessage:", err);
+    throw err;
+  }
 }

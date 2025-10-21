@@ -1,11 +1,14 @@
 <script setup>
-  import { ref, onMounted } from "vue";
   import { getAllTopics } from "@/services/db";
+  import { useTutorStore } from "@/stores/tutorStore";
+  import { onMounted, ref } from "vue";
+
+  const tutorStore = useTutorStore();
 
   const topics = ref([]);
   const selectedTopic = ref("");
-  const loading = ref(true);
   const errorMessage = ref(null);
+  const loading = ref(true);
 
   onMounted(async () => {
     try {
@@ -22,7 +25,8 @@
       console.warn("No topic selected.");
       return;
     }
-    console.log("Selected topic:", selectedTopic.value);
+
+    tutorStore.startNewSession(selectedTopic.value);
   }
 </script>
 
@@ -32,7 +36,7 @@
 
     <select id="topic" v-model="selectedTopic" :disabled="loading || !!errorMessage">
       <option value="" disabled>Select a topic</option>
-      <option v-for="topic in topics" :key="topic.id" :value="topic.id">
+      <option v-for="topic in topics" :key="topic.id" :value="topic.name">
         {{ topic.name }}
       </option>
     </select>
