@@ -51,7 +51,7 @@ Make sure you only ask ONE question at a time.
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [{ role: "system", content: systemPrompt }, ...(messages || [])],
-        temperature: 0.8,
+        temperature: 0.6,
       }),
     });
 
