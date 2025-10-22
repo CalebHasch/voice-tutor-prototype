@@ -9,7 +9,7 @@ export const useTutorStore = defineStore("tutorStore", () => {
   const loading = ref(false);
 
   const userStore = useUserStore();
-  const { username: name, competencyLevel } = userStore.getUser;
+  const { name: username, competencyLevel } = userStore.getUser;
 
   // Start or restart a new tutoring session
   async function startNewSession(topic) {
@@ -19,7 +19,7 @@ export const useTutorStore = defineStore("tutorStore", () => {
 
     loading.value = true;
     try {
-      const response = await sendTutorMessage(topic, systemPrompt, name, competencyLevel);
+      const response = await sendTutorMessage(topic, systemPrompt, username, competencyLevel);
       messages.value.push({ role: "assistant", content: response.reply });
     } catch (err) {
       console.error("Error starting tutor session:", err);
@@ -43,7 +43,7 @@ export const useTutorStore = defineStore("tutorStore", () => {
       const response = await sendTutorMessage(
         selectedTopic.value,
         messages.value,
-        name,
+        username,
         competencyLevel
       );
       messages.value.push({ role: "assistant", content: response.reply });
