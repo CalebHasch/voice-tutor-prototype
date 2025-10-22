@@ -13,3 +13,14 @@ export async function getAllTopics() {
 
   return data;
 }
+
+export async function loadUserData(userId) {
+  const { data, error } = await supabase.from("users").select("*").eq("id", userId).single();
+
+  if (error) {
+    console.error("Error loading user data:", error.message);
+    throw error;
+  }
+
+  return data;
+}

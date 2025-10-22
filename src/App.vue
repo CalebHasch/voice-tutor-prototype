@@ -1,6 +1,24 @@
 <script setup>
   import TopicSelector from "@/components/TopicSelector.vue";
   import TutorChat from "@/components/TutorChat.vue";
+  import { loadUserData } from "@/services/db";
+  import { onMounted } from "vue";
+  import { useUserStore } from "@/stores/userStore";
+
+  const userStore = useUserStore();
+
+  onMounted(async () => {
+    console.log("Loading user data...");
+    try {
+      const userData = await loadUserData(userStore.exampleUsers);
+      if (userData) {
+        console.log("User data loaded:", userData);
+        userStore.setUser(userData);
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  });
 </script>
 
 <template>
