@@ -24,3 +24,24 @@ export async function loadUserData(userId) {
 
   return data;
 }
+
+export async function getCompetency(userId, topicId) {
+  try {
+    const { data, error } = await supabase
+      .from("user_skills")
+      .select("proficiency")
+      .eq("user_id", userId)
+      .eq("topic_id", topicId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Error fetching competency:", error);
+      throw error;
+    }
+
+    return data?.proficiency ?? 5;
+  } catch (err) {
+    console.error("Unexpected error fetching competency:", err);
+    return 5;
+  }
+}

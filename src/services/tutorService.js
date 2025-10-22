@@ -1,7 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
 export async function sendTutorMessage(topic, messages, name, competencyLevel) {
-  console.log(name, competencyLevel);
   try {
     const { data, error } = await supabase.functions.invoke("tutor", {
       body: { topic, messages, name, competencyLevel },

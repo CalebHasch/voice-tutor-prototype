@@ -8,11 +8,10 @@
   const userStore = useUserStore();
 
   onMounted(async () => {
-    console.log("Loading user data...");
     try {
-      const userData = await loadUserData(userStore.exampleUsers);
+      // change index for different example users: Brad, Caleb, Alex, Evan
+      const userData = await loadUserData(userStore.exampleUsers[2]);
       if (userData) {
-        console.log("User data loaded:", userData);
         userStore.setUser(userData);
       }
     } catch (error) {

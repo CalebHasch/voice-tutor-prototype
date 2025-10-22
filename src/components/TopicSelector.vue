@@ -1,9 +1,11 @@
 <script setup>
   import { getAllTopics } from "@/services/db";
   import { useTutorStore } from "@/stores/tutorStore";
+  import { useUserStore } from "@/stores/userStore";
   import { onMounted, ref } from "vue";
 
   const tutorStore = useTutorStore();
+  const userStore = useUserStore();
 
   const topics = ref([]);
   const selectedTopic = ref("");
@@ -20,13 +22,16 @@
     }
   });
 
-  function handleStartSession() {
+  async function handleStartSession() {
     if (!selectedTopic.value) {
       console.warn("No topic selected.");
       return;
     }
 
-    tutorStore.startNewSession(selectedTopic.value);
+    const { id, name } = selectedTopic.value;
+
+    await userStore.setCompetencyLevel(id);
+    await tutorStore.startNewSession(name);
   }
 </script>
 
@@ -36,7 +41,7 @@
 
     <select id="topic" v-model="selectedTopic" :disabled="loading || !!errorMessage">
       <option value="" disabled>Select a topic</option>
-      <option v-for="topic in topics" :key="topic.id" :value="topic.name">
+      <option v-for="topic in topics" :key="topic.id" :value="topic">
         {{ topic.name }}
       </option>
     </select>
