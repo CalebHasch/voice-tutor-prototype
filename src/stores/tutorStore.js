@@ -1,12 +1,15 @@
-import { defineStore } from "pinia";
+import { defineStore, storeToRefs } from "pinia";
 import { ref } from "vue";
 import { sendTutorMessage } from "@/services/tutorService";
+import { useUserStore } from "@/stores/userStore";
 
 export const useTutorStore = defineStore("tutorStore", () => {
   const selectedTopic = ref("");
   const messages = ref([]);
   const loading = ref(false);
 
+  const userStore = useUserStore();
+  const { name: username, competencyLevel } = storeToRefs(userStore);
   // Start or restart a new tutoring session
   async function startNewSession(topic) {
     selectedTopic.value = topic;
@@ -15,7 +18,12 @@ export const useTutorStore = defineStore("tutorStore", () => {
 
     loading.value = true;
     try {
-      const response = await sendTutorMessage(topic, systemPrompt);
+      const response = await sendTutorMessage(
+        topic,
+        systemPrompt,
+        username.value,
+        competencyLevel.value
+      );
       messages.value.push({ role: "assistant", content: response.reply });
     } catch (err) {
       console.error("Error starting tutor session:", err);
@@ -36,7 +44,12 @@ export const useTutorStore = defineStore("tutorStore", () => {
 
     loading.value = true;
     try {
-      const response = await sendTutorMessage(selectedTopic.value, messages.value);
+      const response = await sendTutorMessage(
+        selectedTopic.value,
+        messages.value,
+        username.value,
+        competencyLevel.value
+      );
       messages.value.push({ role: "assistant", content: response.reply });
     } catch (err) {
       console.error("Error sending message:", err);
